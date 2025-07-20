@@ -8,23 +8,22 @@ import com.restaurant.reviewrestaurant.Repositories.VisitorRepository;
 import com.restaurant.reviewrestaurant.entity.Visitor;
 
 import java.util.List;
-@RequiredArgsConstructor
 @Service
+@RequiredArgsConstructor
 public class VisitorService {
     private final VisitorRepository visitorRepository;
+    private long VISITOR_ID = 0;
 
     public void save(Visitor visitor) {
-        if(visitorRepository.findAll().contains(visitor)) {
-            System.out.println("Такой посетитель уже есть");
-        }
-        else {visitorRepository.save(visitor);}
-
+        visitor.setId(++VISITOR_ID);
+        visitorRepository.save(visitor);
     }
+
     public void remove(Visitor visitor) {
-        if (!visitorRepository.findAll().contains(visitor)) {
-            throw new IllegalArgumentException("Посетитель не найден");
+        if (visitorRepository.findById(visitor.getId()) == null) {
+            throw new EntityNotFoundException("Посетитель не найден");
         }
-        visitorRepository.remove(visitor);
+        visitorRepository.remove(visitor.getId());
     }
 
     public List<Visitor> findAll() {
@@ -32,9 +31,14 @@ public class VisitorService {
     }
 
     public Visitor findById(Long id) {
-        return visitorRepository.findAll().stream()
-                .filter(visitor -> visitor.getId().equals(id))
-                .findFirst()
-                .orElseThrow(() -> new EntityNotFoundException("Не найден посетитель с id  " + id));
+        return visitorRepository.findById(id);
     }
+
+    public void update(Long id, Visitor updatedVisitor) {
+        Visitor existingVisitor = visitorRepository.findById(id);
+        if (existingVisitor == null) {
+            throw new EntityNotFoundException("Посетитель с ID " + id + " не найден");
+        }
+        visitorRepository.update(id, updatedVisitor);
+        }
 }

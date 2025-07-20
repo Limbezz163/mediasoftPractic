@@ -1,16 +1,30 @@
 package com.restaurant.reviewrestaurant.entity;
-import com.restaurant.reviewrestaurant.enums.Gender;
-import lombok.Value;
-import lombok.NonNull;
 
+import com.restaurant.reviewrestaurant.enums.Gender;
+import jakarta.persistence.*;
+import lombok.*;
 import java.util.Objects;
 
-@Value
+@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED) // Для JPA
+@Entity
+@Table(name = "visitors")
 public class Visitor {
-    @NonNull private final Long id;
-    private final String name;
-    @NonNull private final Integer age;
-    @NonNull private final Gender gender;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @NonNull
+    private Long id;
+
+    private String name;
+
+    @NonNull
+    private Integer age;
+
+    @NonNull
+    @Enumerated(EnumType.STRING)
+    private Gender gender;
 
     @Override
     public boolean equals(Object o) {
@@ -19,6 +33,7 @@ public class Visitor {
         Visitor visitor = (Visitor) o;
         return Objects.equals(id, visitor.id);
     }
+
     @Override
     public int hashCode() {
         return Objects.hash(id);

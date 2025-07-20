@@ -2,30 +2,26 @@ package com.restaurant.reviewrestaurant.Services;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.restaurant.reviewrestaurant.Repositories.RestaurantRepository;
 import com.restaurant.reviewrestaurant.entity.Restaurant;
-
 import java.util.List;
-@RequiredArgsConstructor
+
 @Service
+@RequiredArgsConstructor
 public class RestaurantService {
     private final RestaurantRepository restaurantRepository;
+    private long idCounter = 0;
 
     public void save(Restaurant restaurant) {
-        if(restaurantRepository.findAll().contains(restaurant)) {
-            System.out.println("Такой ресторан уже существует");
-        } else {
-            restaurantRepository.save(restaurant);
-        }
+                restaurant.setId(++idCounter);
+                restaurantRepository.save(restaurant);
     }
-
-    public void remove(Restaurant restaurant) {
-        if (!restaurantRepository.findAll().contains(restaurant)) {
-            throw new IllegalArgumentException("Ресторан не найден");
+    public void remove(long id) {
+        if (restaurantRepository.findById(id) == null) {
+            throw new EntityNotFoundException("Ресторан не найден");
         }
-        restaurantRepository.remove(restaurant);
+        restaurantRepository.remove(id);
     }
 
     public List<Restaurant> findAll() {
@@ -33,9 +29,13 @@ public class RestaurantService {
     }
 
     public Restaurant findById(Long id) {
-        return restaurantRepository.findAll().stream()
-                .filter(restaurant -> restaurant.getId().equals(id))
-                .findFirst()
-                .orElseThrow(() -> new EntityNotFoundException("Не найден ресторан с id " + id));
+        return restaurantRepository.findById(id);
+    }
+    public void update(Long id, Restaurant updatedRestaurant) {
+        Restaurant existing = restaurantRepository.findById(id);
+        if (existing == null) {
+            throw new EntityNotFoundException("Ресторан с ID " + id + " не найден");
+        }
+        restaurantRepository.update(id, updatedRestaurant);
     }
 }

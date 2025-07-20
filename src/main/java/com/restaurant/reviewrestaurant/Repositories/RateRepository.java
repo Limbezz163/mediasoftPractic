@@ -13,11 +13,23 @@ public class RateRepository {
         return rates;
     }
 
-    public boolean remove(Rate rate){return rates.remove(rate);}
+    public void remove(long restaurantId, long visitorId) {
+        rates.removeIf(rate ->
+                rate.getRestaurantId() == restaurantId &&
+                        rate.getVisitorId() == visitorId
+        );
+    }
 
-    public Rate findRateById(long visitorId, long restaurantId) {
+    public Rate findById(long visitorId, long restaurantId) {
         return rates.stream().filter(review -> (review.getVisitorId().equals(visitorId)) && review.getRestaurantId().equals(restaurantId))
                 .findFirst()
                 .orElse(null);
     }
+
+    public void update(long restaurantId, long visitorId, Rate rate) {
+        Rate oldRate = findById(restaurantId, visitorId);
+        oldRate.setRating(rate.getRating());
+        oldRate.setReviewText(rate.getReviewText());
+    }
+
 }

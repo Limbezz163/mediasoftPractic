@@ -1,16 +1,18 @@
 package com.restaurant.reviewrestaurant.entity;
-import lombok.Value;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.NonNull;
 
 import java.util.Objects;
 
 
-@Value
+@Data
+@AllArgsConstructor
 public class Rate {
-    @NonNull private final Long visitorId;
-    @NonNull private final Long restaurantId;
-    @NonNull private final Integer rating;
-    private final String reviewText;
+    @NonNull private  Long visitorId;
+    @NonNull private Long restaurantId;
+    @NonNull private Integer rating;
+    private String reviewText;
 
     @Override
     public boolean equals(Object o) {

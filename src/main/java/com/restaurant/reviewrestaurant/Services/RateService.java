@@ -5,7 +5,7 @@ import com.restaurant.reviewrestaurant.Repositories.RestaurantRepository;
 import com.restaurant.reviewrestaurant.Repositories.VisitorRepository;
 import com.restaurant.reviewrestaurant.entity.Rate;
 import com.restaurant.reviewrestaurant.entity.Restaurant;
-import lombok.RequiredArgsConstructor;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -14,7 +14,6 @@ import java.math.RoundingMode;
 import java.util.List;
 
 @Service
-
 public class RateService {
     private final RateRepository rateRepository;
     private final RestaurantRepository restaurantRepository;
@@ -40,18 +39,13 @@ public class RateService {
                 .anyMatch(v -> v.getId().equals(rate.getVisitorId()))) {
             throw new IllegalArgumentException("Посетитель не найден");
         }
-
         rateRepository.save(rate);
         updateRestaurantRating(rate.getRestaurantId());
     }
 
-
-    public boolean remove(Rate rate) {
-        boolean isRemoved = rateRepository.remove(rate);
-        if (isRemoved) {
-            updateRestaurantRating(rate.getRestaurantId());
-        }
-        return isRemoved;
+    public void remove(long restaurantId, long visitorId) {
+        rateRepository.remove(restaurantId, visitorId);
+        updateRestaurantRating(restaurantId);
     }
 
 
@@ -59,9 +53,8 @@ public class RateService {
         return rateRepository.findAll();
     }
 
-
     public Rate findRateById(Long visitorId, Long restaurantId) {
-        return rateRepository.findRateById(visitorId, restaurantId);
+        return rateRepository.findById(visitorId, restaurantId);
     }
 
     private void updateRestaurantRating(Long restaurantId) {
@@ -93,8 +86,16 @@ public class RateService {
                             existingRestaurant.getAveragePrice(),
                             newRating
                     );
-                    restaurantRepository.remove(existingRestaurant);
+                    restaurantRepository.remove(existingRestaurant.getId());
                     restaurantRepository.save(updatedRestaurant);
                 });
+    }
+
+    public void update(long restaurantId, long visitorId, Rate rate) {
+        Rate existing = rateRepository.findById(restaurantId, visitorId);
+        if (existing == null) {
+            throw new EntityNotFoundException("Оценка ресторана с ID " + restaurantId + " пользователя с ID "+ visitorId + " не найдена");
+        }
+        rateRepository.update(restaurantId, visitorId, rate);
     }
 }
