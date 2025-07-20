@@ -7,9 +7,9 @@ import java.util.Objects;
 
 @Value
 public class Rate {
-    @NonNull private final Long visitorId;
-    @NonNull private final Long restaurantId;
-    @NonNull private final Integer rating;
+    @NonNull private  Long visitorId;
+    @NonNull private  Long restaurantId;
+    @NonNull private  Integer rating;
     private final String reviewText;
 
     @Override

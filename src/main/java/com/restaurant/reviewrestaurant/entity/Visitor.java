@@ -7,10 +7,10 @@ import java.util.Objects;
 
 @Value
 public class Visitor {
-    @NonNull private final Long id;
+    @NonNull private  Long id;
     private final String name;
-    @NonNull private final Integer age;
-    @NonNull private final Gender gender;
+    @NonNull private  Integer age;
+    @NonNull private  Gender gender;
 
     @Override
     public boolean equals(Object o) {
