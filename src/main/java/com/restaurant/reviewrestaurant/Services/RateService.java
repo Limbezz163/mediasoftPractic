@@ -84,7 +84,7 @@ public class RateService {
                 .filter(r -> r.getId().equals(restaurantId))
                 .findFirst()
                 .ifPresent(existingRestaurant -> {
-                    // 3.1 Создаем обновленную версию
+
                     Restaurant updatedRestaurant = new Restaurant(
                             existingRestaurant.getId(),
                             existingRestaurant.getName(),
