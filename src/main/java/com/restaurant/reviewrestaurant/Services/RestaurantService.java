@@ -1,22 +1,31 @@
 package com.restaurant.reviewrestaurant.Services;
 
+import com.restaurant.reviewrestaurant.dto.RestaurantRequestDTO;
+import com.restaurant.reviewrestaurant.dto.RestaurantResponseDTO;
+import com.restaurant.reviewrestaurant.entity.Restaurant;
+import com.restaurant.reviewrestaurant.mapper.RestaurantMapper;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import com.restaurant.reviewrestaurant.Repositories.RestaurantRepository;
-import com.restaurant.reviewrestaurant.entity.Restaurant;
+
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class RestaurantService {
     private final RestaurantRepository restaurantRepository;
+    private final RestaurantMapper restaurantMapper;
     private long idCounter = 0;
 
-    public void save(Restaurant restaurant) {
-                restaurant.setId(++idCounter);
-                restaurantRepository.save(restaurant);
+    public RestaurantResponseDTO save(RestaurantRequestDTO requestDTO) {
+        Restaurant restaurant = restaurantMapper.toEntity(requestDTO);
+        restaurant.setId(++idCounter);
+        restaurantRepository.save(restaurant);
+        return restaurantMapper.toResponseDTO(restaurant);
     }
+
     public void remove(long id) {
         if (restaurantRepository.findById(id) == null) {
             throw new EntityNotFoundException("Ресторан не найден");
@@ -24,18 +33,27 @@ public class RestaurantService {
         restaurantRepository.remove(id);
     }
 
-    public List<Restaurant> findAll() {
-        return restaurantRepository.findAll();
+    public List<RestaurantResponseDTO> findAll() {
+        return restaurantRepository.findAll().stream()
+                .map(restaurantMapper::toResponseDTO)
+                .collect(Collectors.toList());
     }
 
-    public Restaurant findById(Long id) {
-        return restaurantRepository.findById(id);
+    public RestaurantResponseDTO findById(Long id) {
+        Restaurant restaurant = restaurantRepository.findById(id);
+        return restaurantMapper.toResponseDTO(restaurant);
     }
-    public void update(Long id, Restaurant updatedRestaurant) {
+
+    public RestaurantResponseDTO update(Long id, RestaurantRequestDTO requestDTO) {
         Restaurant existing = restaurantRepository.findById(id);
         if (existing == null) {
             throw new EntityNotFoundException("Ресторан с ID " + id + " не найден");
         }
-        restaurantRepository.update(id, updatedRestaurant);
+
+        Restaurant updated = restaurantMapper.toEntity(requestDTO);
+        updated.setId(id); // Сохраняем оригинальный ID
+        restaurantRepository.update(id, updated);
+
+        return restaurantMapper.toResponseDTO(updated);
     }
 }

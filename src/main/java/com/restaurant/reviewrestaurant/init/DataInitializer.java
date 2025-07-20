@@ -1,4 +1,4 @@
-package com.restaurant.reviewrestaurant.init;
+/* com.restaurant.reviewrestaurant.init;
 import com.restaurant.reviewrestaurant.entity.*;
 import com.restaurant.reviewrestaurant.Services.*;
 import com.restaurant.reviewrestaurant.enums.CuisineType;
@@ -44,11 +44,7 @@ public class DataInitializer {
 
     @PostConstruct
     public void init() {
-        restaurantService.save(sushiWok);
-        restaurantService.save(italianCorner);
 
-        visitorService.save(ivan);
-        visitorService.save(anna);
 
         Rate rate1 = rateProvider.getObject();
         Rate rate2 = rateProvider.getObject();
@@ -56,3 +52,4 @@ public class DataInitializer {
         rateService.save(rate2);
     }
 }
+*/

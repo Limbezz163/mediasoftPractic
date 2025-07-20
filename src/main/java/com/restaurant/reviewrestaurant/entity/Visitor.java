@@ -14,7 +14,6 @@ import java.util.Objects;
 public class Visitor {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @NonNull
     private Long id;
 
     private String name;

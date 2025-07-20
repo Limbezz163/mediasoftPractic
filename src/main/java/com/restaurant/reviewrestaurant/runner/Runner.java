@@ -1,4 +1,4 @@
-package com.restaurant.reviewrestaurant.runner;
+/*package com.restaurant.reviewrestaurant.runner;
 
 import com.restaurant.reviewrestaurant.Services.RateService;
 import com.restaurant.reviewrestaurant.Services.RestaurantService;
@@ -47,3 +47,5 @@ public class Runner implements CommandLineRunner {
         System.out.printf("Обновленный рейтинг: %s\n", updated.getRating());
     }
 }
+
+ */

@@ -76,19 +76,7 @@ public class RateService {
         restaurantRepository.findAll().stream()
                 .filter(r -> r.getId().equals(restaurantId))
                 .findFirst()
-                .ifPresent(existingRestaurant -> {
-
-                    Restaurant updatedRestaurant = new Restaurant(
-                            existingRestaurant.getId(),
-                            existingRestaurant.getName(),
-                            existingRestaurant.getDescription(),
-                            existingRestaurant.getCuisineType(),
-                            existingRestaurant.getAveragePrice(),
-                            newRating
-                    );
-                    restaurantRepository.remove(existingRestaurant.getId());
-                    restaurantRepository.save(updatedRestaurant);
-                });
+                .ifPresent(existingRestaurant -> {existingRestaurant.setRating(newRating);});
     }
 
     public void update(long restaurantId, long visitorId, Rate rate) {
@@ -97,5 +85,6 @@ public class RateService {
             throw new EntityNotFoundException("Оценка ресторана с ID " + restaurantId + " пользователя с ID "+ visitorId + " не найдена");
         }
         rateRepository.update(restaurantId, visitorId, rate);
+        updateRestaurantRating(rate.getRestaurantId());
     }
 }

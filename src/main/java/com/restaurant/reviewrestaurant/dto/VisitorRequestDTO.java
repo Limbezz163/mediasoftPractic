@@ -7,7 +7,7 @@ import lombok.Value;
 
 @Value
 @Builder
-public class VisitorRequestDto {
+public class VisitorRequestDTO {
     @NotBlank(message = "Имя не должно быть пустым")
     @Size(min = 2, max = 50, message = "Имя должно быть длиной от 2-ух до 50-ти симоволов")
     String name;

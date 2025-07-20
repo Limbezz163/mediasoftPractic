@@ -1,18 +1,31 @@
-
 package com.restaurant.reviewrestaurant.mapper;
 
-import com.restaurant.reviewrestaurant.dto.VisitorRequestDto;
-import com.restaurant.reviewrestaurant.dto.VisitorResponseDto;
+import com.restaurant.reviewrestaurant.dto.VisitorRequestDTO;
+import com.restaurant.reviewrestaurant.dto.VisitorResponseDTO;
 import com.restaurant.reviewrestaurant.entity.Visitor;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.NullValuePropertyMappingStrategy;
 
-@Mapper(componentModel = "spring")
+@Mapper(
+        componentModel = "spring",
+        nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE
+)
 public interface VisitorMapper {
-    @Mapping(target = "id", ignore = true)
-    Visitor toEntity(VisitorRequestDto dto);
-    VisitorResponseDto toResponseDTO(Visitor entity);
 
+    // Преобразование из RequestDTO в Entity при создании
     @Mapping(target = "id", ignore = true)
-    VisitorRequestDto toRequestDTO(Visitor entity);
+    Visitor toEntity(VisitorRequestDTO dto);
+
+
+    @Mapping(target = "id", source = "id")
+    @Mapping(target = "name", source = "name")
+    @Mapping(target = "age", source = "age")
+    @Mapping(target = "gender", source = "gender")
+    VisitorResponseDTO toResponseDTO(Visitor entity);
+
+    // Обновление Entity из RequestDTO
+    @Mapping(target = "id", ignore = true) // ID не должен обновляться из DTO
+    void updateEntityFromDto(VisitorRequestDTO dto, @MappingTarget Visitor entity);
 }

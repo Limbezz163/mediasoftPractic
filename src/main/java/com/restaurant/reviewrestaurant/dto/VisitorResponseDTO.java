@@ -6,7 +6,7 @@ import lombok.Value;
 
 @Value
 @Builder
-public class VisitorResponseDto {
+public class VisitorResponseDTO {
     Long id;
     String name;
     Integer age;

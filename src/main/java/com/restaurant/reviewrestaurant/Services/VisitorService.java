@@ -1,44 +1,47 @@
 package com.restaurant.reviewrestaurant.Services;
 
-import jakarta.persistence.EntityNotFoundException;
-import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 import com.restaurant.reviewrestaurant.Repositories.VisitorRepository;
+import com.restaurant.reviewrestaurant.dto.VisitorRequestDTO;
+import com.restaurant.reviewrestaurant.dto.VisitorResponseDTO;
 import com.restaurant.reviewrestaurant.entity.Visitor;
-
+import com.restaurant.reviewrestaurant.mapper.VisitorMapper;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 public class VisitorService {
     private final VisitorRepository visitorRepository;
-    private long VISITOR_ID = 0;
+    private final VisitorMapper visitorMapper;
 
-    public void save(Visitor visitor) {
-        visitor.setId(++VISITOR_ID);
-        visitorRepository.save(visitor);
+    public VisitorResponseDTO save(VisitorRequestDTO requestDTO) {
+        Visitor visitor = visitorMapper.toEntity(requestDTO);
+        Visitor saved = visitorRepository.save(visitor);
+        return visitorMapper.toResponseDTO(saved);
     }
 
-    public void remove(Visitor visitor) {
-        if (visitorRepository.findById(visitor.getId()) == null) {
-            throw new EntityNotFoundException("Посетитель не найден");
-        }
-        visitorRepository.remove(visitor.getId());
+
+    public void remove(Long id) {
+        visitorRepository.remove(id);
     }
 
-    public List<Visitor> findAll() {
-        return visitorRepository.findAll();
+    public List<VisitorResponseDTO> findAll() {
+        return visitorRepository.findAll().stream()
+                .map(visitorMapper::toResponseDTO)
+                .collect(Collectors.toList());
     }
 
-    public Visitor findById(Long id) {
-        return visitorRepository.findById(id);
+    public VisitorResponseDTO findById(Long id) {
+        Visitor visitor = visitorRepository.findById(id);
+        return visitorMapper.toResponseDTO(visitor);
     }
 
-    public void update(Long id, Visitor updatedVisitor) {
-        Visitor existingVisitor = visitorRepository.findById(id);
-        if (existingVisitor == null) {
-            throw new EntityNotFoundException("Посетитель с ID " + id + " не найден");
-        }
-        visitorRepository.update(id, updatedVisitor);
-        }
+    public VisitorResponseDTO update(Long id, VisitorRequestDTO requestDTO) {
+        Visitor visitor = visitorMapper.toEntity(requestDTO);
+        visitor.setId(id);
+        visitorRepository.update(id, visitor);
+        return visitorMapper.toResponseDTO(visitorRepository.findById(id));
+    }
 }

@@ -3,6 +3,8 @@ package com.restaurant.reviewrestaurant.config;
 import com.restaurant.reviewrestaurant.entity.*;
 import com.restaurant.reviewrestaurant.enums.CuisineType;
 import com.restaurant.reviewrestaurant.enums.Gender;
+import com.restaurant.reviewrestaurant.mapper.VisitorMapper;
+import org.mapstruct.factory.Mappers;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -37,4 +39,5 @@ public class TestDataConfig {
     public Rate testRate1() {
         return new Rate(1L, 1L, 4, "Хорошие суши");
     }
+    
 }
