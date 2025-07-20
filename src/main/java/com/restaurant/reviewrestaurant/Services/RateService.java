@@ -1,60 +1,74 @@
 package com.restaurant.reviewrestaurant.Services;
 
+import com.restaurant.reviewrestaurant.dto.RateRequestDTO;
+import com.restaurant.reviewrestaurant.dto.RateResponseDTO;
+import com.restaurant.reviewrestaurant.dto.RateUpdateDTO;
+import com.restaurant.reviewrestaurant.entity.Rate;
+import com.restaurant.reviewrestaurant.mapper.RateMapper;
 import com.restaurant.reviewrestaurant.Repositories.RateRepository;
 import com.restaurant.reviewrestaurant.Repositories.RestaurantRepository;
 import com.restaurant.reviewrestaurant.Repositories.VisitorRepository;
-import com.restaurant.reviewrestaurant.entity.Rate;
-import com.restaurant.reviewrestaurant.entity.Restaurant;
 import jakarta.persistence.EntityNotFoundException;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class RateService {
     private final RateRepository rateRepository;
     private final RestaurantRepository restaurantRepository;
     private final VisitorRepository visitorRepository;
+    private final RateMapper rateMapper;
 
-    @Autowired
-    public RateService(RateRepository rateRepository,
-                       RestaurantRepository restaurantRepository,
-                       VisitorRepository visitorRepository) {
-        this.rateRepository = rateRepository;
-        this.restaurantRepository = restaurantRepository;
-        this.visitorRepository = visitorRepository;
-    }
-
-    public void save(Rate rate) {
-        // Проверка существования ресторана и посетителя
-        if (!restaurantRepository.findAll().stream()
-                .anyMatch(r -> r.getId().equals(rate.getRestaurantId()))) {
+    public RateResponseDTO save(RateRequestDTO requestDTO) {
+        if (restaurantRepository.findById(requestDTO.getRestaurantId()) == null) {
             throw new IllegalArgumentException("Ресторан не найден");
         }
 
-        if (!visitorRepository.findAll().stream()
-                .anyMatch(v -> v.getId().equals(rate.getVisitorId()))) {
+        if (visitorRepository.findById(requestDTO.getVisitorId()) == null) {
             throw new IllegalArgumentException("Посетитель не найден");
         }
+
+        Rate rate = rateMapper.toEntity(requestDTO);
         rateRepository.save(rate);
         updateRestaurantRating(rate.getRestaurantId());
+        return rateMapper.toResponseDTO(rate);
     }
 
-    public void remove(long restaurantId, long visitorId) {
+    public void remove(Long visitorId, Long restaurantId) {
         rateRepository.remove(restaurantId, visitorId);
         updateRestaurantRating(restaurantId);
     }
 
-
-    public List<Rate> findAll() {
-        return rateRepository.findAll();
+    public List<RateResponseDTO> findAll() {
+        return rateRepository.findAll().stream()
+                .map(rateMapper::toResponseDTO)
+                .collect(Collectors.toList());
     }
 
-    public Rate findRateById(Long visitorId, Long restaurantId) {
-        return rateRepository.findById(visitorId, restaurantId);
+    public RateResponseDTO findRateById(Long visitorId, Long restaurantId) {
+        Rate rate = rateRepository.findById(visitorId, restaurantId);
+        if (rate == null) {
+            throw new EntityNotFoundException("Оценка не найдена");
+        }
+        return rateMapper.toResponseDTO(rate);
+    }
+
+    public RateResponseDTO update(Long visitorId, Long restaurantId, RateUpdateDTO updateDTO) {
+        Rate existing = rateRepository.findById(visitorId, restaurantId);
+        if (existing == null) {
+            throw new EntityNotFoundException("Оценка не найдена");
+        }
+
+        rateMapper.updateEntityFromDto(updateDTO, existing);
+        rateRepository.update(restaurantId, visitorId, existing);
+        updateRestaurantRating(restaurantId);
+        return rateMapper.toResponseDTO(existing);
     }
 
     private void updateRestaurantRating(Long restaurantId) {
@@ -66,6 +80,7 @@ public class RateService {
         if (restaurantRates.isEmpty()) {
             return;
         }
+
         BigDecimal newRating = BigDecimal.valueOf(
                 restaurantRates.stream()
                         .mapToInt(Rate::getRating)
@@ -76,15 +91,8 @@ public class RateService {
         restaurantRepository.findAll().stream()
                 .filter(r -> r.getId().equals(restaurantId))
                 .findFirst()
-                .ifPresent(existingRestaurant -> {existingRestaurant.setRating(newRating);});
-    }
-
-    public void update(long restaurantId, long visitorId, Rate rate) {
-        Rate existing = rateRepository.findById(restaurantId, visitorId);
-        if (existing == null) {
-            throw new EntityNotFoundException("Оценка ресторана с ID " + restaurantId + " пользователя с ID "+ visitorId + " не найдена");
-        }
-        rateRepository.update(restaurantId, visitorId, rate);
-        updateRestaurantRating(rate.getRestaurantId());
+                .ifPresent(existingRestaurant -> {
+                    existingRestaurant.setRating(newRating);
+                });
     }
 }
