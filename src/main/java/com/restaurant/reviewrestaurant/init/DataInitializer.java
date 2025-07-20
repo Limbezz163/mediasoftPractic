@@ -1,15 +1,11 @@
 package com.restaurant.reviewrestaurant.init;
 import com.restaurant.reviewrestaurant.entity.*;
 import com.restaurant.reviewrestaurant.Services.*;
-import com.restaurant.reviewrestaurant.enums.CuisineType;
-import com.restaurant.reviewrestaurant.enums.Gender;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
-
-import java.math.BigDecimal;
 
 @Component
 public class DataInitializer {

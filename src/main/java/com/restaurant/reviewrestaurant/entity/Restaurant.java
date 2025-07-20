@@ -7,12 +7,12 @@ import java.util.Objects;
 
 @Value
 public class Restaurant {
-    @NonNull private final Long id;
-    @NonNull private final String name;
-    private final String description;
-    @NonNull private final CuisineType cuisineType;
-    @NonNull private final BigDecimal averagePrice;
-    @NonNull private final BigDecimal rating;
+    @NonNull   Long id;
+    @NonNull private  String name;
+    private  String description;
+    @NonNull private  CuisineType cuisineType;
+    @NonNull private  BigDecimal averagePrice;
+    @NonNull private  BigDecimal rating;
 
     @Override
     public boolean equals(Object o) {
