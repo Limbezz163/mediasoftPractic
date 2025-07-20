@@ -14,6 +14,7 @@ public class RestaurantRequestDTO {
     @Size(min = 2, max = 100, message = "Название должно быть от 2 до 100 символов")
     String name;
 
+    @Size(max = 500, message = "Описание не должно превышать 500 символов")
     String description;
 
     @NotNull(message = "Тип кухни обязателен")
@@ -23,8 +24,8 @@ public class RestaurantRequestDTO {
     @DecimalMin(value = "0.0", message = "Цена не может быть отрицательной")
     BigDecimal averagePrice;
 
-    @NotNull(message = "Рейтинг обязателен")
+    @Builder.Default
     @DecimalMin(value = "0.0", message = "Рейтинг не может быть отрицательным")
     @DecimalMax(value = "5.0", message = "Максимальный рейтинг - 5")
-    BigDecimal rating;
+    BigDecimal rating = BigDecimal.ZERO;
 }

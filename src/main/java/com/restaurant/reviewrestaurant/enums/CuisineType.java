@@ -1,7 +1,7 @@
 package com.restaurant.reviewrestaurant.enums;
 
 public enum CuisineType {
-    EUROPEAN("Европейская"),
+    ITALIAN("Итальянская"),
     CHINESE("Китайская"),
     JAPANESE("Японская"),
     RUSSIAN("Русская");

@@ -10,12 +10,12 @@ import java.util.Objects;
 @Data
 @AllArgsConstructor
 public class Restaurant {
-    @NonNull private  Long id;
-    @NonNull private  String name;
-    private  String description;
-    @NonNull private  CuisineType cuisineType;
-    @NonNull private  BigDecimal averagePrice;
-    @NonNull private  BigDecimal rating;
+    private Long id;
+    @NonNull private String name;
+    private String description;
+    @NonNull private CuisineType cuisineType;
+    @NonNull private BigDecimal averagePrice;
+    @NonNull private BigDecimal rating;
 
     @Override
     public boolean equals(Object o) {

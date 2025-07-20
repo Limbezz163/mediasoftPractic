@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import com.restaurant.reviewrestaurant.Repositories.RestaurantRepository;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -21,7 +22,8 @@ public class RestaurantService {
 
     public RestaurantResponseDTO save(RestaurantRequestDTO requestDTO) {
         Restaurant restaurant = restaurantMapper.toEntity(requestDTO);
-        restaurant.setId(++idCounter);
+        restaurant.setId(++idCounter); // Устанавливаем ID перед сохранением
+        restaurant.setRating(BigDecimal.ZERO);
         restaurantRepository.save(restaurant);
         return restaurantMapper.toResponseDTO(restaurant);
     }

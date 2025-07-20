@@ -9,7 +9,10 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface RestaurantMapper {
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "rating", expression = "java(BigDecimal.ZERO)")
+    @Mapping(source = "description", target = "description") // Явный маппинг description
     Restaurant toEntity(RestaurantRequestDTO dto);
 
+    @Mapping(source = "description", target = "description") // Маппинг для response
     RestaurantResponseDTO toResponseDTO(Restaurant entity);
 }
