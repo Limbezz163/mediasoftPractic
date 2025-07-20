@@ -10,7 +10,9 @@ import com.restaurant.reviewrestaurant.Repositories.RestaurantRepository;
 import com.restaurant.reviewrestaurant.Repositories.VisitorRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -26,12 +28,21 @@ public class RateService {
     private final RateMapper rateMapper;
 
     public RateResponseDTO save(RateRequestDTO requestDTO) {
+
         if (restaurantRepository.findById(requestDTO.getRestaurantId()) == null) {
             throw new IllegalArgumentException("Ресторан не найден");
         }
 
         if (visitorRepository.findById(requestDTO.getVisitorId()) == null) {
             throw new IllegalArgumentException("Посетитель не найден");
+        }
+
+
+        if (rateRepository.existsByVisitorIdAndRestaurantId(
+                requestDTO.getVisitorId(),
+                requestDTO.getRestaurantId())) {
+            throw new IllegalArgumentException(
+                    "Отзыв от этого пользователя для данного ресторана уже существует");
         }
 
         Rate rate = rateMapper.toEntity(requestDTO);
@@ -60,15 +71,26 @@ public class RateService {
     }
 
     public RateResponseDTO update(Long visitorId, Long restaurantId, RateUpdateDTO updateDTO) {
-        Rate existing = rateRepository.findById(visitorId, restaurantId);
-        if (existing == null) {
-            throw new EntityNotFoundException("Оценка не найдена");
-        }
+        try {
 
-        rateMapper.updateEntityFromDto(updateDTO, existing);
-        rateRepository.update(restaurantId, visitorId, existing);
-        updateRestaurantRating(restaurantId);
-        return rateMapper.toResponseDTO(existing);
+            if (!rateRepository.existsByVisitorIdAndRestaurantId(visitorId, restaurantId)) {
+                throw new EntityNotFoundException("Отзыв не найден");
+            }
+            Rate existing = new Rate(); 
+            rateMapper.updateEntityFromDto(updateDTO, existing);
+            rateRepository.update(restaurantId, visitorId, existing);
+            updateRestaurantRating(restaurantId);
+
+
+            return rateMapper.toResponseDTO(
+                    rateRepository.findById(visitorId, restaurantId)
+            );
+        } catch (EntityNotFoundException e) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    e.getMessage(),
+                    e);
+        }
     }
 
     private void updateRestaurantRating(Long restaurantId) {
