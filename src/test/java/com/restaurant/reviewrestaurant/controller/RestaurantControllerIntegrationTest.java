@@ -39,7 +39,7 @@ class RestaurantControllerIntegrationTest {
 
     @Test
     void createRestaurant_ShouldReturnCreatedRestaurant() throws Exception {
-        // Given
+        
         RestaurantRequestDTO requestDTO = RestaurantRequestDTO.builder()
                 .name("Test Restaurant")
                 .description("Test Description")
@@ -59,7 +59,7 @@ class RestaurantControllerIntegrationTest {
 
         given(restaurantService.save(any(RestaurantRequestDTO.class))).willReturn(responseDTO);
 
-        // When & Then
+        
         mockMvc.perform(post("/api/restaurants")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDTO)))
@@ -75,7 +75,7 @@ class RestaurantControllerIntegrationTest {
 
     @Test
     void getAllRestaurants_ShouldReturnAllRestaurants() throws Exception {
-        // Given
+        
         RestaurantResponseDTO restaurant1 = RestaurantResponseDTO.builder()
                 .id(1L)
                 .name("Restaurant 1")
@@ -97,7 +97,7 @@ class RestaurantControllerIntegrationTest {
         List<RestaurantResponseDTO> restaurants = Arrays.asList(restaurant1, restaurant2);
         given(restaurantService.findAll()).willReturn(restaurants);
 
-        // When & Then
+        
         mockMvc.perform(get("/api/restaurants"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(2))
@@ -107,7 +107,7 @@ class RestaurantControllerIntegrationTest {
 
     @Test
     void getRestaurantById_ShouldReturnRestaurant() throws Exception {
-        // Given
+        
         Long restaurantId = 1L;
         RestaurantResponseDTO responseDTO = RestaurantResponseDTO.builder()
                 .id(restaurantId)
@@ -120,7 +120,7 @@ class RestaurantControllerIntegrationTest {
 
         given(restaurantService.findById(restaurantId)).willReturn(responseDTO);
 
-        // When & Then
+        
         mockMvc.perform(get("/api/restaurants/{id}", restaurantId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(responseDTO.getId()))
@@ -129,7 +129,7 @@ class RestaurantControllerIntegrationTest {
 
     @Test
     void updateRestaurant_ShouldReturnUpdatedRestaurant() throws Exception {
-        // Given
+        
         Long restaurantId = 1L;
         RestaurantRequestDTO requestDTO = RestaurantRequestDTO.builder()
                 .name("Updated Restaurant")
@@ -150,7 +150,7 @@ class RestaurantControllerIntegrationTest {
 
         given(restaurantService.update(eq(restaurantId), any(RestaurantRequestDTO.class))).willReturn(responseDTO);
 
-        // When & Then
+        
         mockMvc.perform(put("/api/restaurants/{id}", restaurantId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDTO)))
@@ -162,18 +162,18 @@ class RestaurantControllerIntegrationTest {
 
     @Test
     void deleteRestaurant_ShouldReturnNoContent() throws Exception {
-        // Given
+        
         Long restaurantId = 1L;
         doNothing().when(restaurantService).remove(restaurantId);
 
-        // When & Then
+        
         mockMvc.perform(delete("/api/restaurants/{id}", restaurantId))
                 .andExpect(status().isNoContent());
     }
 
     @Test
     void getRestaurantsWithMinRating_ShouldReturnFilteredRestaurants() throws Exception {
-        // Given
+        
         BigDecimal minRating = BigDecimal.valueOf(4.0);
         boolean useJpql = false;
 
@@ -186,7 +186,7 @@ class RestaurantControllerIntegrationTest {
         List<RestaurantResponseDTO> restaurants = List.of(restaurant1);
         given(restaurantService.getRestaurantsWithMinRating(minRating)).willReturn(restaurants);
 
-        // When & Then
+        
         mockMvc.perform(get("/api/restaurants/with-rating")
                         .param("minRating", minRating.toString())
                         .param("useJpql", String.valueOf(useJpql)))
@@ -197,7 +197,7 @@ class RestaurantControllerIntegrationTest {
 
     @Test
     void createRestaurant_WithInvalidData_ShouldReturnBadRequest() throws Exception {
-        // Given
+        
         RestaurantRequestDTO invalidRequest = RestaurantRequestDTO.builder()
                 .name("")
                 .description("Test Description")
@@ -206,7 +206,7 @@ class RestaurantControllerIntegrationTest {
                 .rating(BigDecimal.valueOf(6.0))
                 .build();
 
-        // When & Then
+        
         mockMvc.perform(post("/api/restaurants")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidRequest)))
