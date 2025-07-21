@@ -14,7 +14,6 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 )
 public interface VisitorMapper {
 
-    // Преобразование из RequestDTO в Entity при создании
     @Mapping(target = "id", ignore = true)
     Visitor toEntity(VisitorRequestDTO dto);
 
@@ -25,7 +24,7 @@ public interface VisitorMapper {
     @Mapping(target = "gender", source = "gender")
     VisitorResponseDTO toResponseDTO(Visitor entity);
 
-    // Обновление Entity из RequestDTO
+
     @Mapping(target = "id", ignore = true) // ID не должен обновляться из DTO
     void updateEntityFromDto(VisitorRequestDTO dto, @MappingTarget Visitor entity);
 }

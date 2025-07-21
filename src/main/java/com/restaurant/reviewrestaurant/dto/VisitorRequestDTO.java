@@ -10,6 +10,7 @@ import lombok.Value;
 @Builder
 @Schema(description = "DTO для создания или обновления посетителя")
 public class VisitorRequestDTO {
+
     @NotBlank(message = "Имя не должно быть пустым")
     @Size(min = 2, max = 50, message = "Имя должно быть длиной от 2-ух до 50-ти симоволов")
     @Schema(description = "Имя посетителя", example = "Иван Иванов", requiredMode = Schema.RequiredMode.REQUIRED)

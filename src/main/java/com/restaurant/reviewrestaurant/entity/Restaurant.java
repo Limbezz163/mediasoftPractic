@@ -2,10 +2,7 @@ package com.restaurant.reviewrestaurant.entity;
 
 import com.restaurant.reviewrestaurant.enums.CuisineType;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.NonNull;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.util.Objects;
@@ -13,6 +10,7 @@ import java.util.Objects;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 @Entity
 @Table(name = "restaurants")
 public class Restaurant {
