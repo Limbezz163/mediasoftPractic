@@ -1,56 +1,41 @@
 package com.restaurant.reviewrestaurant.Repositories;
 
 import com.restaurant.reviewrestaurant.entity.Rate;
-import jakarta.persistence.EntityNotFoundException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-
-import java.util.ArrayList;
+import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
-public class RateRepository {
-    private final List<Rate> rates = new ArrayList<>();
+public interface RateRepository extends JpaRepository<Rate, Rate.RateId> {
 
-    public void save(Rate rate) {
-        rates.add(rate);
-    }
+    @Query("SELECT r FROM Rate r WHERE r.visitorId = :visitorId AND r.restaurantId = :restaurantId")
+    Optional<Rate> findByVisitorIdAndRestaurantId(
+            @Param("visitorId") Long visitorId,
+            @Param("restaurantId") Long restaurantId);
 
-    public List<Rate> findAll() {
-        return new ArrayList<>(rates);
-    }
+    @Transactional
+    @Modifying
+    @Query("DELETE FROM Rate r WHERE r.visitorId = :visitorId AND r.restaurantId = :restaurantId")
+    void deleteByVisitorIdAndRestaurantId(
+            @Param("visitorId") Long visitorId,
+            @Param("restaurantId") Long restaurantId);
 
-    public void remove(long restaurantId, long visitorId) {
-        rates.removeIf(rate ->
-                rate.getRestaurantId().equals(restaurantId) &&
-                        rate.getVisitorId().equals(visitorId)
-        );
-    }
+    boolean existsByVisitorIdAndRestaurantId(Long visitorId, Long restaurantId);
 
-    public Rate findById(long visitorId, long restaurantId) {
-        return rates.stream()
-                .filter(rate -> rate.getVisitorId().equals(visitorId) &&
-                        rate.getRestaurantId().equals(restaurantId))
-                .findFirst()
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "Оценка не найдена для visitorId: " + visitorId +
-                                " и restaurantId: " + restaurantId));
-    }
+    @Query("SELECT r FROM Rate r WHERE r.restaurantId = :restaurantId")
+    List<Rate> findAllByRestaurantId(@Param("restaurantId") Long restaurantId);
 
-    public void update(long restaurantId, long visitorId, Rate rate) {
-        Rate oldRate = rates.stream()
-                .filter(r -> r.getVisitorId().equals(visitorId) &&
-                        r.getRestaurantId().equals(restaurantId))
-                .findFirst()
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "Отзыв не найден для visitorId: " + visitorId +
-                                " и restaurantId: " + restaurantId));
+    Page<Rate> findAllByRestaurantId(Long restaurantId, Pageable pageable);
 
-        oldRate.setRating(rate.getRating());
-        oldRate.setReviewText(rate.getReviewText());
-    }
-    public boolean existsByVisitorIdAndRestaurantId(Long visitorId, Long restaurantId) {
-        return rates.stream()
-                .anyMatch(rate -> rate.getVisitorId().equals(visitorId) &&
-                        rate.getRestaurantId().equals(restaurantId));
-    }
+    @Query("SELECT r FROM Rate r WHERE r.restaurantId = :restaurantId ORDER BY r.rating DESC")
+    List<Rate> findTopRatedByRestaurantId(
+            @Param("restaurantId") Long restaurantId,
+            Pageable pageable);
 }

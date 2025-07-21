@@ -5,8 +5,10 @@ import com.restaurant.reviewrestaurant.dto.VisitorRequestDTO;
 import com.restaurant.reviewrestaurant.dto.VisitorResponseDTO;
 import com.restaurant.reviewrestaurant.entity.Visitor;
 import com.restaurant.reviewrestaurant.mapper.VisitorMapper;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -22,9 +24,11 @@ public class VisitorService {
         return visitorMapper.toResponseDTO(saved);
     }
 
-
     public void remove(Long id) {
-        visitorRepository.remove(id);
+        if (!visitorRepository.existsById(id)) {
+            throw new EntityNotFoundException("Посетитель не найден");
+        }
+        visitorRepository.deleteById(id);
     }
 
     public List<VisitorResponseDTO> findAll() {
@@ -34,14 +38,17 @@ public class VisitorService {
     }
 
     public VisitorResponseDTO findById(Long id) {
-        Visitor visitor = visitorRepository.findById(id);
+        Visitor visitor = visitorRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Посетитель не найден"));
         return visitorMapper.toResponseDTO(visitor);
     }
 
     public VisitorResponseDTO update(Long id, VisitorRequestDTO requestDTO) {
-        Visitor visitor = visitorMapper.toEntity(requestDTO);
-        visitor.setId(id);
-        visitorRepository.update(id, visitor);
-        return visitorMapper.toResponseDTO(visitorRepository.findById(id));
+        Visitor existing = visitorRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Посетитель не найден"));
+
+        visitorMapper.updateEntityFromDto(requestDTO, existing);
+        Visitor updated = visitorRepository.save(existing);
+        return visitorMapper.toResponseDTO(updated);
     }
 }

@@ -8,7 +8,7 @@ import java.util.Objects;
 @Data
 @Builder
 @AllArgsConstructor
-@NoArgsConstructor(access = AccessLevel.PROTECTED) // Для JPA
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "visitors")
 public class Visitor {
@@ -19,10 +19,12 @@ public class Visitor {
     private String name;
 
     @NonNull
+    @Column(nullable = false)
     private Integer age;
 
     @NonNull
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private Gender gender;
 
     @Override

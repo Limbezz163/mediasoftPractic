@@ -4,12 +4,18 @@ import com.restaurant.reviewrestaurant.dto.RateRequestDTO;
 import com.restaurant.reviewrestaurant.dto.RateResponseDTO;
 import com.restaurant.reviewrestaurant.dto.RateUpdateDTO;
 import com.restaurant.reviewrestaurant.entity.Rate;
+import com.restaurant.reviewrestaurant.entity.Restaurant;
+import com.restaurant.reviewrestaurant.entity.Visitor;
 import com.restaurant.reviewrestaurant.mapper.RateMapper;
 import com.restaurant.reviewrestaurant.Repositories.RateRepository;
 import com.restaurant.reviewrestaurant.Repositories.RestaurantRepository;
 import com.restaurant.reviewrestaurant.Repositories.VisitorRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -17,7 +23,6 @@ import org.springframework.web.server.ResponseStatusException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -28,15 +33,13 @@ public class RateService {
     private final RateMapper rateMapper;
 
     public RateResponseDTO save(RateRequestDTO requestDTO) {
-
-        if (restaurantRepository.findById(requestDTO.getRestaurantId()) == null) {
+        if (!restaurantRepository.existsById(requestDTO.getRestaurantId())) {
             throw new IllegalArgumentException("Ресторан не найден");
         }
 
-        if (visitorRepository.findById(requestDTO.getVisitorId()) == null) {
+        if (!visitorRepository.existsById(requestDTO.getVisitorId())) {
             throw new IllegalArgumentException("Посетитель не найден");
         }
-
 
         if (rateRepository.existsByVisitorIdAndRestaurantId(
                 requestDTO.getVisitorId(),
@@ -46,75 +49,59 @@ public class RateService {
         }
 
         Rate rate = rateMapper.toEntity(requestDTO);
-        rateRepository.save(rate);
-        updateRestaurantRating(rate.getRestaurantId());
-        return rateMapper.toResponseDTO(rate);
+        Rate saved = rateRepository.save(rate);
+        updateRestaurantRating(requestDTO.getRestaurantId());
+        return rateMapper.toResponseDTO(saved);
     }
 
     public void remove(Long visitorId, Long restaurantId) {
-        rateRepository.remove(restaurantId, visitorId);
+        if (!rateRepository.existsByVisitorIdAndRestaurantId(visitorId, restaurantId)) {
+            throw new EntityNotFoundException("Оценка не найдена");
+        }
+        rateRepository.deleteByVisitorIdAndRestaurantId(visitorId, restaurantId);
         updateRestaurantRating(restaurantId);
     }
 
     public List<RateResponseDTO> findAll() {
         return rateRepository.findAll().stream()
                 .map(rateMapper::toResponseDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     public RateResponseDTO findRateById(Long visitorId, Long restaurantId) {
-        Rate rate = rateRepository.findById(visitorId, restaurantId);
-        if (rate == null) {
-            throw new EntityNotFoundException("Оценка не найдена");
-        }
+        Rate rate = rateRepository.findByVisitorIdAndRestaurantId(visitorId, restaurantId)
+                .orElseThrow(() -> new EntityNotFoundException("Оценка не найдена"));
         return rateMapper.toResponseDTO(rate);
     }
 
     public RateResponseDTO update(Long visitorId, Long restaurantId, RateUpdateDTO updateDTO) {
-        try {
+        Rate existing = rateRepository.findByVisitorIdAndRestaurantId(visitorId, restaurantId)
+                .orElseThrow(() -> new EntityNotFoundException("Отзыв не найден"));
 
-            if (!rateRepository.existsByVisitorIdAndRestaurantId(visitorId, restaurantId)) {
-                throw new EntityNotFoundException("Отзыв не найден");
-            }
-            Rate existing = new Rate(); 
-            rateMapper.updateEntityFromDto(updateDTO, existing);
-            rateRepository.update(restaurantId, visitorId, existing);
-            updateRestaurantRating(restaurantId);
+        rateMapper.updateEntityFromDto(updateDTO, existing);
+        Rate updated = rateRepository.save(existing);
+        updateRestaurantRating(restaurantId);
+        return rateMapper.toResponseDTO(updated);
+    }
 
-
-            return rateMapper.toResponseDTO(
-                    rateRepository.findById(visitorId, restaurantId)
-            );
-        } catch (EntityNotFoundException e) {
-            throw new ResponseStatusException(
-                    HttpStatus.NOT_FOUND,
-                    e.getMessage(),
-                    e);
-        }
+    public Page<RateResponseDTO> getRatesByRestaurant(Long restaurantId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("rating").descending());
+        return rateRepository.findAllByRestaurantId(restaurantId, pageable)
+                .map(rateMapper::toResponseDTO);
     }
 
     private void updateRestaurantRating(Long restaurantId) {
-        List<Rate> restaurantRates = rateRepository.findAll()
-                .stream()
-                .filter(rate -> rate.getRestaurantId().equals(restaurantId))
-                .toList();
+        List<Rate> rates = rateRepository.findAllByRestaurantId(restaurantId);
+        if (rates.isEmpty()) return;
 
-        if (restaurantRates.isEmpty()) {
-            return;
-        }
+        double average = rates.stream()
+                .mapToInt(Rate::getRating)
+                .average()
+                .orElse(0.0);
 
-        BigDecimal newRating = BigDecimal.valueOf(
-                restaurantRates.stream()
-                        .mapToInt(Rate::getRating)
-                        .average()
-                        .orElse(0.0)
-        ).setScale(2, RoundingMode.HALF_UP);
-
-        restaurantRepository.findAll().stream()
-                .filter(r -> r.getId().equals(restaurantId))
-                .findFirst()
-                .ifPresent(existingRestaurant -> {
-                    existingRestaurant.setRating(newRating);
-                });
+        Restaurant restaurant = restaurantRepository.findById(restaurantId)
+                .orElseThrow(() -> new EntityNotFoundException("Ресторан не найден"));
+        restaurant.setRating(BigDecimal.valueOf(average).setScale(2, RoundingMode.HALF_UP));
+        restaurantRepository.save(restaurant);
     }
 }

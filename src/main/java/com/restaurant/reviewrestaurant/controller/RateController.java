@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -37,7 +38,7 @@ public class RateController {
                     responseCode = "201",
                     description = "Оценка успешно создана",
                     content = @Content(schema = @Schema(implementation = RateResponseDTO.class)))
-                    })
+    })
     public RateResponseDTO create(
             @RequestBody @Valid
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
@@ -67,6 +68,23 @@ public class RateController {
         return rateService.findAll();
     }
 
+    @GetMapping("/restaurant/{restaurantId}")
+    @Operation(
+            summary = "Получить отзывы ресторана с пагинацией",
+            description = "Возвращает отзывы для конкретного ресторана с возможностью пагинации и сортировки по рейтингу"
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "Список отзывов успешно получен",
+            content = @Content(schema = @Schema(implementation = RateResponseDTO[].class))
+    )
+    public Page<RateResponseDTO> getRatesByRestaurant(
+            @Parameter(description = "ID ресторана") @PathVariable Long restaurantId,
+            @Parameter(description = "Номер страницы (0..N)") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Количество элементов на странице") @RequestParam(defaultValue = "10") int size) {
+        return rateService.getRatesByRestaurant(restaurantId, page, size);
+    }
+
     @GetMapping("/{visitorId}/{restaurantId}")
     @Operation(
             summary = "Получить оценку по ID посетителя и ресторана",
@@ -87,7 +105,6 @@ public class RateController {
     public RateResponseDTO getById(
             @Parameter(description = "ID посетителя", example = "1")
             @PathVariable Long visitorId,
-
             @Parameter(description = "ID ресторана", example = "1")
             @PathVariable Long restaurantId) {
         return rateService.findRateById(visitorId, restaurantId);
@@ -102,15 +119,14 @@ public class RateController {
             @ApiResponse(
                     responseCode = "200",
                     description = "Оценка успешно обновлена",
-                    content = @Content(schema = @Schema(implementation = RateResponseDTO.class)))
-                    })
+                    content = @Content(schema = @Schema(implementation = RateResponseDTO.class))
+            )
+    })
     public RateResponseDTO update(
             @Parameter(description = "ID посетителя", example = "1")
             @PathVariable Long visitorId,
-
             @Parameter(description = "ID ресторана", example = "1")
             @PathVariable Long restaurantId,
-
             @RequestBody @Valid
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description = "Данные для обновления оценки",
@@ -138,7 +154,6 @@ public class RateController {
     public void delete(
             @Parameter(description = "ID посетителя", example = "1")
             @PathVariable Long visitorId,
-
             @Parameter(description = "ID ресторана", example = "1")
             @PathVariable Long restaurantId) {
         rateService.remove(visitorId, restaurantId);
