@@ -53,7 +53,7 @@ public class RestaurantService {
         }
 
         Restaurant updated = restaurantMapper.toEntity(requestDTO);
-        updated.setId(id); // Сохраняем оригинальный ID
+        updated.setId(id);
         restaurantRepository.update(id, updated);
 
         return restaurantMapper.toResponseDTO(updated);
