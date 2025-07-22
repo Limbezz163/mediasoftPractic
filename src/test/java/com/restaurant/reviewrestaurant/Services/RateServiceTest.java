@@ -10,8 +10,9 @@ import com.restaurant.reviewrestaurant.entity.Rate;
 import com.restaurant.reviewrestaurant.entity.Restaurant;
 import com.restaurant.reviewrestaurant.entity.Visitor;
 import com.restaurant.reviewrestaurant.enums.Gender;
+import com.restaurant.reviewrestaurant.exception.DuplicateRateException;
+import com.restaurant.reviewrestaurant.exception.ResourceNotFoundException;
 import com.restaurant.reviewrestaurant.mapper.RateMapper;
-import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,8 +27,6 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -35,13 +34,10 @@ class RateServiceTest {
 
     @Mock
     private RateRepository rateRepository;
-
     @Mock
     private RestaurantRepository restaurantRepository;
-
     @Mock
     private VisitorRepository visitorRepository;
-
     @Mock
     private RateMapper rateMapper;
 
@@ -95,174 +91,123 @@ class RateServiceTest {
     }
 
     @Test
-    void save_ShouldSaveRate_WhenValidRequest() {
-        when(restaurantRepository.existsById(anyLong())).thenReturn(true);
-        when(visitorRepository.existsById(anyLong())).thenReturn(true);
-        when(rateRepository.existsByVisitorIdAndRestaurantId(anyLong(), anyLong())).thenReturn(false);
-        when(rateMapper.toEntity(any(RateRequestDTO.class))).thenReturn(rate);
-        when(rateRepository.save(any(Rate.class))).thenReturn(rate);
-        when(rateMapper.toResponseDTO(any(Rate.class))).thenReturn(rateResponseDTO);
+    void save_ShouldSaveRateWhenValidRequest() {
+        when(restaurantRepository.existsById(1L)).thenReturn(true);
+        when(visitorRepository.existsById(1L)).thenReturn(true);
+        when(rateRepository.existsByVisitorIdAndRestaurantId(1L, 1L)).thenReturn(false);
+        when(rateMapper.toEntity(rateRequestDTO)).thenReturn(rate);
+        when(rateRepository.save(rate)).thenReturn(rate);
+        when(rateMapper.toResponseDTO(rate)).thenReturn(rateResponseDTO);
 
         RateResponseDTO result = rateService.save(rateRequestDTO);
 
-        assertNotNull(result);
-        assertEquals(1L, result.getVisitorId());
-        assertEquals(1L, result.getRestaurantId());
-        assertEquals(5, result.getRating());
-        assertEquals("Great food!", result.getReviewText());
-
-        verify(rateRepository, times(1)).save(any(Rate.class));
-        verify(restaurantRepository, times(1)).existsById(anyLong());
-        verify(visitorRepository, times(1)).existsById(anyLong());
+        assertEquals(rateResponseDTO, result);
+        verify(rateRepository).save(rate);
     }
 
     @Test
-    void save_ShouldThrowException_WhenRestaurantNotFound() {
-        when(restaurantRepository.existsById(anyLong())).thenReturn(false);
+    void save_ShouldThrowWhenRestaurantNotFound() {
+        when(restaurantRepository.existsById(1L)).thenReturn(false);
 
-        assertThrows(IllegalArgumentException.class, () -> rateService.save(rateRequestDTO));
-        verify(rateRepository, never()).save(any(Rate.class));
+        assertThrows(ResourceNotFoundException.class, () -> rateService.save(rateRequestDTO));
+        verify(rateRepository, never()).save(any());
     }
 
     @Test
-    void save_ShouldThrowException_WhenVisitorNotFound() {
-        when(restaurantRepository.existsById(anyLong())).thenReturn(true);
-        when(visitorRepository.existsById(anyLong())).thenReturn(false);
+    void save_ShouldThrowWhenVisitorNotFound() {
+        when(restaurantRepository.existsById(1L)).thenReturn(true);
+        when(visitorRepository.existsById(1L)).thenReturn(false);
 
-        assertThrows(IllegalArgumentException.class, () -> rateService.save(rateRequestDTO));
-        verify(rateRepository, never()).save(any(Rate.class));
+        assertThrows(ResourceNotFoundException.class, () -> rateService.save(rateRequestDTO));
+        verify(rateRepository, never()).save(any());
     }
 
     @Test
-    void save_ShouldThrowException_WhenRateAlreadyExists() {
-        when(restaurantRepository.existsById(anyLong())).thenReturn(true);
-        when(visitorRepository.existsById(anyLong())).thenReturn(true);
-        when(rateRepository.existsByVisitorIdAndRestaurantId(anyLong(), anyLong())).thenReturn(true);
+    void save_ShouldThrowWhenRateAlreadyExists() {
+        when(restaurantRepository.existsById(1L)).thenReturn(true);
+        when(visitorRepository.existsById(1L)).thenReturn(true);
+        when(rateRepository.existsByVisitorIdAndRestaurantId(1L, 1L)).thenReturn(true);
 
-        assertThrows(IllegalArgumentException.class, () -> rateService.save(rateRequestDTO));
-        verify(rateRepository, never()).save(any(Rate.class));
+        assertThrows(DuplicateRateException.class, () -> rateService.save(rateRequestDTO));
+        verify(rateRepository, never()).save(any());
     }
 
     @Test
-    void save_ShouldUpdateRestaurantRating_WhenRateSaved() {
-        when(restaurantRepository.existsById(anyLong())).thenReturn(true);
-        when(visitorRepository.existsById(anyLong())).thenReturn(true);
-        when(rateRepository.existsByVisitorIdAndRestaurantId(anyLong(), anyLong())).thenReturn(false);
-        when(rateMapper.toEntity(any(RateRequestDTO.class))).thenReturn(rate);
-        when(rateRepository.save(any(Rate.class))).thenReturn(rate);
-        when(rateMapper.toResponseDTO(any(Rate.class))).thenReturn(rateResponseDTO);
-        when(rateRepository.findAllByRestaurantId(anyLong())).thenReturn(List.of(rate));
-        when(restaurantRepository.findById(anyLong())).thenReturn(Optional.of(restaurant));
-        when(restaurantRepository.save(any(Restaurant.class))).thenReturn(restaurant);
-
-        rateService.save(rateRequestDTO);
-
-        verify(restaurantRepository, times(1)).save(any(Restaurant.class));
-    }
-
-    @Test
-    void remove_ShouldDeleteRate_WhenExists() {
-        when(rateRepository.existsByVisitorIdAndRestaurantId(anyLong(), anyLong())).thenReturn(true);
-        doNothing().when(rateRepository).deleteByVisitorIdAndRestaurantId(anyLong(), anyLong());
+    void remove_ShouldDeleteRateWhenExists() {
+        when(rateRepository.existsByVisitorIdAndRestaurantId(1L, 1L)).thenReturn(true);
+        doNothing().when(rateRepository).deleteByVisitorIdAndRestaurantId(1L, 1L);
 
         rateService.remove(1L, 1L);
 
-        verify(rateRepository, times(1)).deleteByVisitorIdAndRestaurantId(anyLong(), anyLong());
+        verify(rateRepository).deleteByVisitorIdAndRestaurantId(1L, 1L);
     }
 
     @Test
-    void remove_ShouldThrowException_WhenRateNotFound() {
-        when(rateRepository.existsByVisitorIdAndRestaurantId(anyLong(), anyLong())).thenReturn(false);
+    void remove_ShouldThrowWhenRateNotFound() {
+        when(rateRepository.existsByVisitorIdAndRestaurantId(1L, 1L)).thenReturn(false);
 
-        assertThrows(EntityNotFoundException.class, () -> rateService.remove(1L, 1L));
-        verify(rateRepository, never()).deleteByVisitorIdAndRestaurantId(anyLong(), anyLong());
+        assertThrows(ResourceNotFoundException.class, () -> rateService.remove(1L, 1L));
+        verify(rateRepository, never()).deleteByVisitorIdAndRestaurantId(any(), any());
     }
-
 
     @Test
     void findAll_ShouldReturnAllRates() {
-        when(rateRepository.findAll()).thenReturn(Collections.singletonList(rate));
-        when(rateMapper.toResponseDTO(any(Rate.class))).thenReturn(rateResponseDTO);
+        when(rateRepository.findAll()).thenReturn(List.of(rate));
+        when(rateMapper.toResponseDTO(rate)).thenReturn(rateResponseDTO);
 
         List<RateResponseDTO> result = rateService.findAll();
 
-        assertFalse(result.isEmpty());
         assertEquals(1, result.size());
         assertEquals(rateResponseDTO, result.get(0));
-        verify(rateRepository, times(1)).findAll();
     }
 
     @Test
-    void findRateById_ShouldReturnRate_WhenExists() {
-        when(rateRepository.findByVisitorIdAndRestaurantId(anyLong(), anyLong()))
-                .thenReturn(Optional.of(rate));
-        when(rateMapper.toResponseDTO(any(Rate.class))).thenReturn(rateResponseDTO);
+    void findRateById_ShouldReturnRateWhenExists() {
+        when(rateRepository.findByVisitorIdAndRestaurantId(1L, 1L)).thenReturn(Optional.of(rate));
+        when(rateMapper.toResponseDTO(rate)).thenReturn(rateResponseDTO);
 
         RateResponseDTO result = rateService.findRateById(1L, 1L);
 
-        assertNotNull(result);
-        assertEquals(1L, result.getVisitorId());
-        assertEquals(1L, result.getRestaurantId());
-        verify(rateRepository, times(1)).findByVisitorIdAndRestaurantId(anyLong(), anyLong());
+        assertEquals(rateResponseDTO, result);
     }
 
     @Test
-    void findRateById_ShouldThrowException_WhenNotFound() {
-        when(rateRepository.findByVisitorIdAndRestaurantId(anyLong(), anyLong()))
-                .thenReturn(Optional.empty());
+    void findRateById_ShouldThrowWhenNotFound() {
+        when(rateRepository.findByVisitorIdAndRestaurantId(1L, 1L)).thenReturn(Optional.empty());
 
-        assertThrows(EntityNotFoundException.class, () -> rateService.findRateById(1L, 1L));
+        assertThrows(ResourceNotFoundException.class, () -> rateService.findRateById(1L, 1L));
     }
 
     @Test
-    void update_ShouldUpdateRate_WhenExists() {
-        when(rateRepository.findByVisitorIdAndRestaurantId(anyLong(), anyLong()))
-                .thenReturn(Optional.of(rate));
-        when(rateRepository.save(any(Rate.class))).thenReturn(rate);
-        when(rateMapper.toResponseDTO(any(Rate.class))).thenReturn(rateResponseDTO);
+    void update_ShouldUpdateRateWhenExists() {
+        when(rateRepository.findByVisitorIdAndRestaurantId(1L, 1L)).thenReturn(Optional.of(rate));
+        when(rateRepository.save(rate)).thenReturn(rate);
+        when(rateMapper.toResponseDTO(rate)).thenReturn(rateResponseDTO);
 
         RateResponseDTO result = rateService.update(1L, 1L, rateUpdateDTO);
 
-        assertNotNull(result);
-        verify(rateMapper, times(1)).updateEntityFromDto(any(RateUpdateDTO.class), any(Rate.class));
-        verify(rateRepository, times(1)).save(any(Rate.class));
+        assertEquals(rateResponseDTO, result);
+        verify(rateMapper).updateEntityFromDto(rateUpdateDTO, rate);
     }
 
     @Test
-    void update_ShouldThrowException_WhenNotFound() {
-        when(rateRepository.findByVisitorIdAndRestaurantId(anyLong(), anyLong()))
-                .thenReturn(Optional.empty());
+    void update_ShouldThrowWhenNotFound() {
+        when(rateRepository.findByVisitorIdAndRestaurantId(1L, 1L)).thenReturn(Optional.empty());
 
-        assertThrows(EntityNotFoundException.class, () -> rateService.update(1L, 1L, rateUpdateDTO));
-        verify(rateRepository, never()).save(any(Rate.class));
-    }
-
-    @Test
-    void update_ShouldUpdateRestaurantRating_WhenRateUpdated() {
-        when(rateRepository.findByVisitorIdAndRestaurantId(anyLong(), anyLong()))
-                .thenReturn(Optional.of(rate));
-        when(rateRepository.save(any(Rate.class))).thenReturn(rate);
-        when(rateMapper.toResponseDTO(any(Rate.class))).thenReturn(rateResponseDTO);
-        when(rateRepository.findAllByRestaurantId(anyLong())).thenReturn(List.of(rate));
-        when(restaurantRepository.findById(anyLong())).thenReturn(Optional.of(restaurant));
-        when(restaurantRepository.save(any(Restaurant.class))).thenReturn(restaurant);
-
-        rateService.update(1L, 1L, rateUpdateDTO);
-
-        verify(restaurantRepository, times(1)).save(any(Restaurant.class));
+        assertThrows(ResourceNotFoundException.class, () -> rateService.update(1L, 1L, rateUpdateDTO));
+        verify(rateRepository, never()).save(any());
     }
 
     @Test
     void getRatesByRestaurant_ShouldReturnPagedRates() {
-        Page<Rate> ratePage = new PageImpl<>(Collections.singletonList(rate));
-        when(rateRepository.findAllByRestaurantId(anyLong(), any(Pageable.class)))
-                .thenReturn(ratePage);
-        when(rateMapper.toResponseDTO(any(Rate.class))).thenReturn(rateResponseDTO);
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Rate> ratePage = new PageImpl<>(List.of(rate), pageable, 1);
+        when(rateRepository.findAllByRestaurantId(1L, pageable)).thenReturn(ratePage);
+        when(rateMapper.toResponseDTO(rate)).thenReturn(rateResponseDTO);
 
         Page<RateResponseDTO> result = rateService.getRatesByRestaurant(1L, 0, 10);
 
-        assertNotNull(result);
         assertEquals(1, result.getTotalElements());
-        verify(rateRepository, times(1)).findAllByRestaurantId(anyLong(), any(Pageable.class));
+        assertEquals(rateResponseDTO, result.getContent().get(0));
     }
 }

@@ -16,15 +16,11 @@ public interface VisitorMapper {
 
     @Mapping(target = "id", ignore = true)
     Visitor toEntity(VisitorRequestDTO dto);
-
-
     @Mapping(target = "id", source = "id")
     @Mapping(target = "name", source = "name")
     @Mapping(target = "age", source = "age")
     @Mapping(target = "gender", source = "gender")
     VisitorResponseDTO toResponseDTO(Visitor entity);
-
-
-    @Mapping(target = "id", ignore = true) // ID не должен обновляться из DTO
+    @Mapping(target = "id", ignore = true)
     void updateEntityFromDto(VisitorRequestDTO dto, @MappingTarget Visitor entity);
 }
